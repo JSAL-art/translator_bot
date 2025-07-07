@@ -17,30 +17,44 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Use /review to see today’s words\n"
         "Use /setlang <LANG_CODE> to set your target language (default = EN)"
     )
+def get_user_id(update: Update):
+    if update.message and update.message.from_user:
+        return update.message.from_user.id
+    elif update.callback_query and update.callback_query.from_user:
+        return update.callback_query.from_user.id
+    return None
+
 
 async def setlang(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
+    user_id = get_user_id(update)
+    if user_id is None:
+        return
+
     if not context.args:
         return await update.message.reply_text("Usage: /setlang <LANG_CODE> (e.g. EN, FR, DE)")
     lang = context.args[0].upper()
     user_lang[user_id] = lang
     await update.message.reply_text(f"✅ Target language set to {lang}")
 
+
 async def translate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.message.from_user.id
+    user_id = get_user_id(update)
+    if user_id is None:
+        return
+
     if not context.args:
         return await update.message.reply_text("Usage: /t <word or phrase>")
-    
+
     text = " ".join(context.args)
     target_lang = user_lang.get(user_id, "EN")
     translated, source_lang = translate_word(text, target_lang)
 
-    # Save to user_data
     user_data.setdefault(user_id, []).append((text, translated, source_lang, target_lang))
 
     await update.message.reply_text(
         f"🔤 '{text}' ({source_lang} → {target_lang}) = '{translated}'\nSaved!"
     )
+
 
 async def review(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
