@@ -4,24 +4,9 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from translator import translate_word
 from telegram import BotCommand
-from aiohttp import web
-import os
-import asyncio
+from keep_alive import keep_alive
 
-
-async def healthcheck(request):
-    return web.Response(text="✅ Bot is alive")
-
-async def run_health_server():
-    app = web.Application()
-    app.add_routes([web.get("/", healthcheck)])
-
-    runner = web.AppRunner(app)
-    await runner.setup()
-
-    port = int(os.environ.get("PORT", 10000))  # Render sets PORT automatically
-    site = web.TCPSite(runner, "0.0.0.0", port)
-    await site.start()
+keep_alive()
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -112,10 +97,6 @@ if __name__ == "__main__":
     )
 
     add_handlers(app)
-    #app.run_polling()
-
-    loop = asyncio.get_event_loop()
-    loop.create_task(run_health_server())  # <-- Keeps Render port open
     app.run_polling()
 
 # if __name__ == "__main__":
